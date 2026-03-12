@@ -7,6 +7,7 @@ export interface AppState {
   step: AppStep;
   apiKey: string;
   file: File | null;
+  userPrompt: string;
   fareStructure: FareStructure | null;
   gtfsFiles: Record<string, string> | null;
   error: string | null;
@@ -15,6 +16,7 @@ export interface AppState {
 type Action =
   | { type: 'SET_API_KEY'; apiKey: string }
   | { type: 'SET_FILE'; file: File }
+  | { type: 'SET_USER_PROMPT'; userPrompt: string }
   | { type: 'START_EXTRACTION' }
   | { type: 'EXTRACTION_SUCCESS'; fareStructure: FareStructure }
   | { type: 'EXTRACTION_ERROR'; error: string }
@@ -29,6 +31,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, apiKey: action.apiKey };
     case 'SET_FILE':
       return { ...state, file: action.file, error: null };
+    case 'SET_USER_PROMPT':
+      return { ...state, userPrompt: action.userPrompt };
     case 'START_EXTRACTION':
       return { ...state, step: 'extracting', error: null };
     case 'EXTRACTION_SUCCESS':
@@ -52,6 +56,7 @@ function initialState(): AppState {
   return {
     step: 'upload',
     apiKey: localStorage.getItem('anthropic_api_key') ?? '',
+    userPrompt: '',
     file: null,
     fareStructure: null,
     gtfsFiles: null,
