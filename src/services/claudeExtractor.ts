@@ -57,6 +57,7 @@ RULES:
 export async function extractFares(
   apiKey: string,
   file: File,
+  userPrompt?: string,
 ): Promise<FareStructure> {
   const client = new Anthropic({
     apiKey,
@@ -64,6 +65,11 @@ export async function extractFares(
   });
 
   const contentBlocks = await buildContentBlocks(file);
+
+  let prompt = EXTRACTION_PROMPT;
+  if (userPrompt?.trim()) {
+    prompt += `\n\nADDITIONAL CONTEXT FROM USER:\n${userPrompt.trim()}`;
+  }
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -73,7 +79,7 @@ export async function extractFares(
         role: 'user',
         content: [
           ...contentBlocks,
-          { type: 'text' as const, text: EXTRACTION_PROMPT },
+          { type: 'text' as const, text: prompt },
         ],
       },
     ],

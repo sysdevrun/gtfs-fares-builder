@@ -7,15 +7,17 @@ import { GtfsPreview } from './components/GtfsPreview';
 import { DownloadButton } from './components/DownloadButton';
 import { extractFares } from './services/claudeExtractor';
 import { generateGTFS } from './services/gtfsGenerator';
+import { useState } from 'react';
 
 function App() {
   const { state, dispatch } = useAppState();
+  const [showPromptInReview, setShowPromptInReview] = useState(false);
 
   const handleExtract = async () => {
     if (!state.apiKey || !state.file) return;
     dispatch({ type: 'START_EXTRACTION' });
     try {
-      const fareStructure = await extractFares(state.apiKey, state.file);
+      const fareStructure = await extractFares(state.apiKey, state.file, state.userPrompt || undefined);
       dispatch({ type: 'EXTRACTION_SUCCESS', fareStructure });
     } catch (err) {
       dispatch({
@@ -95,6 +97,21 @@ function App() {
                 currentFile={state.file}
                 onFileSelected={(file) => dispatch({ type: 'SET_FILE', file })}
               />
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Additional context <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={state.userPrompt}
+                  onChange={(e) => dispatch({ type: 'SET_USER_PROMPT', userPrompt: e.target.value })}
+                  placeholder="e.g. Currency is EUR. Children under 6 ride free. Zone A covers the city center. There are peak fares from 7-9am and 5-7pm..."
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Add details about the fare structure that may not be obvious from the document.
+                </p>
+              </div>
             </div>
             <button
               onClick={handleExtract}
@@ -128,13 +145,33 @@ function App() {
                     Re-upload
                   </button>
                   <button
-                    onClick={handleExtract}
+                    onClick={() => setShowPromptInReview(!showPromptInReview)}
                     className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md"
                   >
-                    Re-extract
+                    Re-extract{showPromptInReview ? ' ▴' : ' ▾'}
                   </button>
                 </div>
               </div>
+              {showPromptInReview && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Additional context for re-extraction
+                  </label>
+                  <textarea
+                    value={state.userPrompt}
+                    onChange={(e) => dispatch({ type: 'SET_USER_PROMPT', userPrompt: e.target.value })}
+                    placeholder="e.g. The senior discount is 50%. Zone C includes suburbs only. Please also extract the monthly pass prices..."
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                  />
+                  <button
+                    onClick={() => { setShowPromptInReview(false); handleExtract(); }}
+                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
+                  >
+                    Re-extract with updated context
+                  </button>
+                </div>
+              )}
               <FareEditor
                 fareStructure={state.fareStructure}
                 onChange={(fareStructure) =>
