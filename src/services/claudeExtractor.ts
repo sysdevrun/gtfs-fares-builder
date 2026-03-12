@@ -87,7 +87,7 @@ export async function extractFares(
   return parseExtractedJSON(textBlock.text);
 }
 
-async function buildContentBlocks(file: File): Promise<Anthropic.MessageCreateParams['messages'][0]['content']> {
+async function buildContentBlocks(file: File): Promise<Anthropic.ContentBlockParam[]> {
   const base64 = await fileToBase64(file);
 
   if (file.type === 'application/pdf') {
